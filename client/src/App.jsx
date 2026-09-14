@@ -53,7 +53,7 @@ function DiscoverPage({ shops }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState(null);
-  const [sortBy, setSortBy] = useState("Rating");
+  const [sortBy, setSortBy] = useState(null);
   const [criteria, setCriteria] = useState("");
   const [recommendation, setRecommendation] = useState(null);
   const [loadingRec, setLoadingRec] = useState(false);
@@ -94,9 +94,9 @@ function DiscoverPage({ shops }) {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (sortBy === "Rating") return b.rating - a.rating;
-      return 0;
-    });
+  if (sortBy === "Rating") return b.rating - a.rating;
+  return 0; // no sortBy selected yet — leave original order untouched
+});
 
   return (
     <>
