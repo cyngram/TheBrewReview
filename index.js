@@ -38,14 +38,24 @@ app.use(express.json());
 
 app.post("/api/recommendations", async (req, res) => {
   const { criteria } = req.body;
+
+  // basic validation
+  if (!criteria || typeof criteria !== "string" || criteria.trim().length < 3) {
+    return res.status(400).json({ error: "Please enter a more specific preference (at least a few words)." });
+  }
+
+  if (criteria.length > 200) {
+    return res.status(400).json({ error: "That's a bit long — try a shorter description." });
+  }
+
   const shopSummaries = shops
     .map(
       (shop) =>
         `${shop.name}, located at ${shop.address}, has a rating of ${shop.rating} and tags: ${shop.tags.join(", ")}`,
     )
     .join("\n");
-  const prompt = `Given the following coffee shops:\n${shopSummaries}\n\nPlease recommend the best coffee shop based on the following criteria: ${criteria}. Provide a brief explanation for your recommendation.`;
-  // Handle recommendation logic here
+
+  const prompt = `Given the following coffee shops:\n${shopSummaries}\n\nA user is looking for a coffee shop matching this preference: "${criteria}".\n\nIf this preference is nonsensical, offensive, or completely unrelated to finding a coffee shop (e.g. random characters, unrelated topics), respond with exactly: "I couldn't understand that preference — try describing what you're looking for, like 'quiet with good wifi'."\n\nOtherwise, recommend the best matching shop and briefly explain why.`;
 
   try {
     const response = await fetch(
@@ -59,16 +69,19 @@ app.post("/api/recommendations", async (req, res) => {
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
         }),
-      },
+      }
     );
 
-    // Handle response from the Gemini API
+    if (!response.ok) {
+      throw new Error(`Gemini API returned ${response.status}`);
+    }
+
     const data = await response.json();
     const recommendation = data.candidates[0].content.parts[0].text;
     res.json({ recommendation });
   } catch (error) {
     console.error("Error fetching recommendation:", error);
-    res.status(500).json({ error: "Failed to fetch recommendation" });
+    res.status(500).json({ error: "Something went wrong getting a recommendation. Please try again." });
   }
 });
 
