@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import logo from "./assets/TheBrewReviewLogo.png";
 import { Search, MapPin, Clock } from "lucide-react";
 import "./App.css";
@@ -139,29 +139,6 @@ function DiscoverPage({ shops }) {
         </div>
       </div>
 
-      <div className="ai-section">
-        <h3>Not sure where to go? Ask AI</h3>
-        <div className="ai-input-row">
-          <input
-            type="text"
-            placeholder="e.g. quiet spot with good wifi"
-            className="search-input ai-input"
-            value={criteria}
-            onChange={(e) => setCriteria(e.target.value)}
-          />
-          <button
-            className="btn btn-primary"
-            onClick={getRecommendation}
-            disabled={loadingRec || !criteria}
-          >
-            {loadingRec ? "Thinking..." : "Get Recommendation"}
-          </button>
-        </div>
-        {recommendation && (
-          <div className="ai-recommendation">{recommendation}</div>
-        )}
-      </div>
-
       <div className="main-content">
         <div className="shop-list">
           {filteredShops.map((shop) => (
@@ -213,6 +190,35 @@ function DiscoverPage({ shops }) {
           ))}
         </div>
       </div>
+
+    
+      <div className="ai-section">
+    <h3>Not sure where to go? Ask AI</h3>
+    <div className="ai-input-row">
+      <input
+        type="text"
+        placeholder="e.g. quiet spot with good wifi"
+        className="search-input ai-input"
+        value={criteria}
+        onChange={(e) => setCriteria(e.target.value)}
+      />
+      <button
+        className="btn btn-primary"
+        onClick={getRecommendation}
+        disabled={loadingRec || !criteria}
+      >
+        {loadingRec ? "Thinking..." : "Get Recommendation"}
+      </button>
+    </div>
+    {recommendation && (
+      <div className="ai-recommendation">
+        <button className="ai-dismiss" onClick={() => setRecommendation(null)}>
+          ×
+        </button>
+        {recommendation}
+      </div>
+    )}
+  </div>;
     </>
   );
 }
@@ -236,6 +242,13 @@ function ShopDetailPage({ shops }) {
           <h1>{shop.name}</h1>
           <span className="shop-price">$$</span>
         </div>
+
+        <img
+          src={`https://mozartscoffee.com/cdn/shop/articles/Mozart_s_in_the_mist.jpg?v=1597794948&width=1600`}
+          alt={`${shop.name} placeholder`} height= "500px" width= "auto"
+          className="detail-image"
+        />
+
         <p className="shop-address">{shop.address}</p>
         <div className="shop-rating-row">
           <StarRating rating={shop.rating} />
@@ -268,6 +281,8 @@ function ShopDetailPage({ shops }) {
 
 function App() {
   const [shops, setShops] = useState([]);
+  const location = useLocation();
+  const isShopDetail = location.pathname.startsWith("/shop/");
 
   useEffect(() => {
     fetch("https://thebrewreview.onrender.com/api/shops")
@@ -280,7 +295,9 @@ function App() {
       <header className="site-header">
         <div className="flex-row header-left">
           <img src={logo} alt="The Brew Review logo" className="logo" />
-          <button className="btn tab-active">Discover</button>
+          <button className="btn btn-text disc">
+            {isShopDetail ? "Shop Details" : "Discover"}
+          </button>
         </div>
         <div className="flex-row header-right">
           <button className="btn btn-text">Sign in</button>
