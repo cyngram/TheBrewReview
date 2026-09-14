@@ -2,16 +2,6 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
-
-app.get("/api/shops", (req, res) => {
-  res.json(shops);
-});
-
-//load api key from .env file
-
-app.use(cors());
-app.use(express.json());
-
 //concrete data for now
 const shops = [
   {
@@ -99,6 +89,15 @@ const shops = [
     rating: 4.1,
   },
 ];
+
+app.get("/api/shops", (req, res) => {
+  res.json(shops);
+});
+
+//load api key from .env file
+
+app.use(cors());
+app.use(express.json());
 
 app.post("/api/recommendations", async (req, res) => {
   const { criteria } = req.body;
