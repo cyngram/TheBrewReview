@@ -12,7 +12,7 @@ A full-stack coffee shop discovery app for Austin, TX — think Letterboxd/RateM
 ## A sneak peak
 
 ![The Brew Review screenshot](./DiscoverPreview.png)
-![The Brew Review screenshot](./shopDetailsPreview.png)
+![The Brew Review screenshot](./ShopDetailsPreview.png)
  
 ## Features
  
