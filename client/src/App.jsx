@@ -5,7 +5,7 @@ import './App.css'
 function App() {
   const [shops, setShops] = useState([]);
   useEffect(() => {
-    fetch('http://localhost:3000/api/shops')
+    fetch('https://thebrewreview.onrender.com/api/shops')
     .then((res) => res.json())
     .then((data) => setShops(data));
   }, []);
