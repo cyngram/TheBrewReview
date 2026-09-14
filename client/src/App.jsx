@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
-const shops = [
-    {id: 1, name: 'Cielito Lindo Cafe', address:'411 Brazos St APT 101, Austin, TX 78701', tags: ['wifi', 'quiet'] },
-    {id: 2, name: 'Cafe Creme', address:'710 W Cesar Chavez St, Austin, TX 78701', tags: ['outdoor', 'social']},
-    {id: 3, name: 'Mozarts Coffee Roasters', address: '3825 Lake Austin Blvd, Austin, TX 78703', tags: ['wifi', 'scenic']},
-  ]
+
 function App() {
+  const [shops, setShops] = useState([]);
+  useEffect(() => {
+    fetch('http://localhost:3000/api/shops')
+    .then((res) => res.json())
+    .then((data) => setShops(data));
+  }, []);
+
   return(
     <div className="app">
       <h1>BrewLog</h1>
@@ -24,5 +27,4 @@ function App() {
     </div>
   )
 }
-
 export default App
