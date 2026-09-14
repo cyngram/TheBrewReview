@@ -1,21 +1,30 @@
-import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom'
-import logo from './assets/TheBrewReviewLogo.png'
-import { Search, MapPin, Clock } from 'lucide-react'
-import './App.css'
+import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import logo from "./assets/TheBrewReviewLogo.png";
+import { Search, MapPin, Clock } from "lucide-react";
+import "./App.css";
 
-const filterOptions = ['Cozy', 'Wifi', 'Outdoor', 'Pet-Friendly', 'Study-Spot', 'Late Night', 'Pastries'];
-const sortOptions = ['Rating', 'Nearby'];
+const filterOptions = [
+  "Cozy",
+  "Wifi",
+  "Outdoor",
+  "Pet-Friendly",
+  "Study-Spot",
+  "Late Night",
+  "Pastries",
+];
+const sortOptions = ["Rating", "Nearby"];
 
 function StarRating({ rating }) {
   return (
     <span className="stars">
-      {'★'.repeat(Math.round(rating))}
-      {'☆'.repeat(5 - Math.round(rating))}
+      {"★".repeat(Math.round(rating))}
+      {"☆".repeat(5 - Math.round(rating))}
     </span>
   );
 }
 
+//component for each shop card in the list
 function ShopCard({ shop, onClick }) {
   return (
     <div className="shop-card" onClick={onClick}>
@@ -30,18 +39,46 @@ function ShopCard({ shop, onClick }) {
       </div>
       <div className="tag-list">
         {shop.tags.map((tag) => (
-          <span key={tag} className="tag-pill">{tag}</span>
+          <span key={tag} className="tag-pill">
+            {tag}
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
+//navigate to discover page, filter by tag, sort by rating or nearby, search by name or address
 function DiscoverPage({ shops }) {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState(null);
-  const [sortBy, setSortBy] = useState('Rating');
+  const [sortBy, setSortBy] = useState("Rating");
+  const [criteria, setCriteria] = useState("");
+  const [recommendation, setRecommendation] = useState(null);
+  const [loadingRec, setLoadingRec] = useState(false);
+
+  const topRated = [...shops].sort((a, b) => b.rating - a.rating).slice(0, 3);
+
+  const getRecommendation = async () => {
+    setLoadingRec(true);
+    setRecommendation(null);
+    try {
+      const res = await fetch(
+        "https://thebrewreview.onrender.com/api/recommendations",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ criteria }),
+        },
+      );
+      const data = await res.json();
+      setRecommendation(data.recommendation);
+    } catch (error) {
+      setRecommendation("Something went wrong — try again.");
+    }
+    setLoadingRec(false);
+  };
 
   const filteredShops = shops
     .filter((shop) => {
@@ -49,17 +86,17 @@ function DiscoverPage({ shops }) {
         shop.name.toLowerCase().includes(search.toLowerCase()) ||
         shop.address.toLowerCase().includes(search.toLowerCase());
 
-      const filterTag = activeFilter ? activeFilter.toLowerCase().replace(/\s+/g, '-') : null;
+      const filterTag = activeFilter
+        ? activeFilter.toLowerCase().replace(/\s+/g, "-")
+        : null;
       const matchesFilter = !filterTag || shop.tags.includes(filterTag);
 
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (sortBy === 'Rating') return b.rating - a.rating;
+      if (sortBy === "Rating") return b.rating - a.rating;
       return 0;
     });
-
-  const topRated = [...shops].sort((a, b) => b.rating - a.rating).slice(0, 3);
 
   return (
     <>
@@ -80,8 +117,10 @@ function DiscoverPage({ shops }) {
           {filterOptions.map((option) => (
             <button
               key={option}
-              className={`pill ${activeFilter === option ? 'pill-active' : ''}`}
-              onClick={() => setActiveFilter(activeFilter === option ? null : option)}
+              className={`pill ${activeFilter === option ? "pill-active" : ""}`}
+              onClick={() =>
+                setActiveFilter(activeFilter === option ? null : option)
+              }
             >
               {option}
             </button>
@@ -91,7 +130,7 @@ function DiscoverPage({ shops }) {
           {sortOptions.map((option) => (
             <button
               key={option}
-              className={`pill ${sortBy === option ? 'pill-active' : ''}`}
+              className={`pill ${sortBy === option ? "pill-active" : ""}`}
               onClick={() => setSortBy(option)}
             >
               {option}
@@ -100,13 +139,41 @@ function DiscoverPage({ shops }) {
         </div>
       </div>
 
+      <div className="ai-section">
+        <h3>Not sure where to go? Ask AI</h3>
+        <div className="ai-input-row">
+          <input
+            type="text"
+            placeholder="e.g. quiet spot with good wifi"
+            className="search-input ai-input"
+            value={criteria}
+            onChange={(e) => setCriteria(e.target.value)}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={getRecommendation}
+            disabled={loadingRec || !criteria}
+          >
+            {loadingRec ? "Thinking..." : "Get Recommendation"}
+          </button>
+        </div>
+        {recommendation && (
+          <div className="ai-recommendation">{recommendation}</div>
+        )}
+      </div>
+
       <div className="main-content">
         <div className="shop-list">
           {filteredShops.map((shop) => (
-            //clicking changes the URL
-            <ShopCard key={shop.id} shop={shop} onClick={() => navigate(`/shop/${shop.id}`)} />
+            <ShopCard
+              key={shop.id}
+              shop={shop}
+              onClick={() => navigate(`/shop/${shop.id}`)}
+            />
           ))}
-          {filteredShops.length === 0 && <p className="no-results">No shops match that filter yet.</p>}
+          {filteredShops.length === 0 && (
+            <p className="no-results">No shops match that filter yet.</p>
+          )}
         </div>
 
         <div className="map-panel">
@@ -116,8 +183,10 @@ function DiscoverPage({ shops }) {
               <span
                 key={shop.id}
                 className="map-pin"
-                //current holders
-                style={{ top: `${20 + (i * 17) % 70}%`, left: `${15 + (i * 23) % 70}%` }}
+                style={{
+                  top: `${20 + ((i * 17) % 70)}%`,
+                  left: `${15 + ((i * 23) % 70)}%`,
+                }}
               >
                 ☕
               </span>
@@ -130,7 +199,11 @@ function DiscoverPage({ shops }) {
         <span className="nearby-heading">HIGHLY RATED NEARBY</span>
         <div className="nearby-cards">
           {topRated.map((shop) => (
-            <div key={shop.id} className="nearby-card" onClick={() => navigate(`/shop/${shop.id}`)}>
+            <div
+              key={shop.id}
+              className="nearby-card"
+              onClick={() => navigate(`/shop/${shop.id}`)}
+            >
               <h3>{shop.name}</h3>
               <div className="shop-rating-row">
                 <StarRating rating={shop.rating} />
@@ -144,6 +217,7 @@ function DiscoverPage({ shops }) {
   );
 }
 
+//component for the shop detail page
 function ShopDetailPage({ shops }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -153,7 +227,9 @@ function ShopDetailPage({ shops }) {
 
   return (
     <div className="detail-view">
-      <button className="back-link" onClick={() => navigate('/')}>&larr; Back to discovery</button>
+      <button className="back-link" onClick={() => navigate("/")}>
+        &larr; Back to discovery
+      </button>
 
       <div className="detail-card">
         <div className="shop-card-top">
@@ -167,17 +243,25 @@ function ShopDetailPage({ shops }) {
         </div>
         <div className="tag-list">
           {shop.tags.map((tag) => (
-            <span key={tag} className="tag-pill">{tag}</span>
+            <span key={tag} className="tag-pill">
+              {tag}
+            </span>
           ))}
         </div>
         <div className="detail-meta">
-          <span className="flex-row"><Clock size={16} /> Hours coming soon</span>
-          <span className="flex-row"><MapPin size={16} /> Distance coming soon</span>
+          <span className="flex-row">
+            <Clock size={16} /> Hours coming soon
+          </span>
+          <span className="flex-row">
+            <MapPin size={16} /> Distance coming soon
+          </span>
         </div>
       </div>
 
       <h2 className="reviews-heading">Reviews</h2>
-      <p className="no-reviews">No reviews yet — this feature is coming soon.</p>
+      <p className="no-reviews">
+        No reviews yet — this feature is coming soon.
+      </p>
     </div>
   );
 }
@@ -186,7 +270,7 @@ function App() {
   const [shops, setShops] = useState([]);
 
   useEffect(() => {
-    fetch('https://thebrewreview.onrender.com/api/shops')
+    fetch("https://thebrewreview.onrender.com/api/shops")
       .then((res) => res.json())
       .then((data) => setShops(data));
   }, []);
@@ -209,7 +293,7 @@ function App() {
         <Route path="/shop/:id" element={<ShopDetailPage shops={shops} />} />
       </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
